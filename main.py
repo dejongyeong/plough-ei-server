@@ -1,7 +1,6 @@
 import cv2
 import sys
 import json
-import time
 from os.path import exists
 
 
