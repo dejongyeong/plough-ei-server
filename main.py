@@ -26,7 +26,7 @@ def read_qr_code(filename):
                         # not giving ice cream (show message on screen)
                         send_to_robot(False)
                     else:
-                        # qr code is stored bot not used
+                        # qr code is stored bot not used, update dict
                         qr_codes[decode] = True
                         scanned_codes.add(decode)
                         with open(filename, "w") as file:
