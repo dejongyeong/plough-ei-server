@@ -3,6 +3,8 @@ import psycopg2
 import pandas as pd
 
 # This file is for downloading all user information after the event.
+
+# set environment variable from cli
 # $env:DATABASE_URL = "postgresql://<USERNAME>:<ENTER-SQL-USER-PASSWORD>@<HOST>:<PORT>/defaultdb?sslmode=verify-full"
 
 
