@@ -1,15 +1,15 @@
 import os
 import psycopg2
+from dotenv import load_dotenv
 
 # This file is for testing purposes.
 
-# set environment variable from cli
-# $env:DATABASE_URL = "postgresql://<USERNAME>:<ENTER-SQL-USER-PASSWORD>@<HOST>:<PORT>/defaultdb?sslmode=verify-full"
-
-
 if __name__ == '__main__':
+    # load environment variables
+    load_dotenv()
+
     # create connection
-    connection = psycopg2.connect(os.environ['DATABASE_URL'])
+    connection = psycopg2.connect(os.environ.get('DATABASE_URL'))
 
     # create a cursor and execute query
     cursor = connection.cursor()

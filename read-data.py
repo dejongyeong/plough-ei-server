@@ -1,20 +1,20 @@
 import os
 import psycopg2
 import pandas as pd
+from dotenv import load_dotenv
 
 # This file is for downloading all user information after the event.
 
-# set environment variable from cli
-# $env:DATABASE_URL = "postgresql://<USERNAME>:<ENTER-SQL-USER-PASSWORD>@<HOST>:<PORT>/defaultdb?sslmode=verify-full"
-
-
 if __name__ == '__main__':
+    # load environment variables
+    load_dotenv()
+
     # create connection
-    connection = psycopg2.connect(os.environ['DATABASE_URL'])
+    connection = psycopg2.connect(os.environ.get('DATABASE_URL'))
 
     # create a cursor and execute query
     cursor = connection.cursor()
-    cursor.execute("SELECT name, phone FROM public.\"User\";")
+    cursor.execute("SELECT name, email, phone FROM public.\"User\";")
 
     # read data into a pandas dataframe
     rows = cursor.fetchall()
