@@ -22,8 +22,6 @@ def read_qr_code(filename):
             params = parse_qs(urlparse(decode).query)
             coupon = params.get('coupon', [None])[0]
 
-            print(coupon)
-
             # check if coupon is not empty
             if coupon is not None and coupon != '':
                 # check if code is present in the dictionary
