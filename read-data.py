@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     # create a cursor and execute query
     cursor = connection.cursor()
-    cursor.execute("SELECT name, email, phone FROM public.\"User\";")
+    cursor.execute("SELECT * FROM public.\"User\";")
 
     # read data into a pandas dataframe
     rows = cursor.fetchall()
