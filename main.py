@@ -1,6 +1,7 @@
 import cv2
 import sys
 import json
+import time
 from os.path import exists
 from urllib.parse import urlparse, parse_qs
 
@@ -30,6 +31,7 @@ def display_message_on_frame(frame, message):
 def send_to_robot(robot):
     print('signal sent to robot')
 
+    time.sleep(2)
     SIGNAL_PIN_TO_ROBOT = 17
     SIGNAL_PIN_FROM_ROBOT = 27  # feedback signal from robot
 
@@ -65,6 +67,8 @@ def read_qr_code(filename, robot):
 
     with open(filename, "r") as file:
         qr_codes = json.load(file)
+
+    robot.set_busy()
 
     while True:
         _, frame = cap.read()
@@ -127,6 +131,10 @@ def read_qr_code(filename, robot):
 
         if cv2.waitKey(1) == ord("q"):
             break
+
+        if cv2.waitKey(1) == ord("r"):
+            robot.set_ready()
+            print('Robot is ready')
 
     cap.release()
     cv2.destroyAllWindows()
