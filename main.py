@@ -5,7 +5,7 @@ import serial
 import tkinter as tk
 from os.path import exists
 from PIL import ImageTk, Image
-from tkinter import PhotoImage, StringVar
+from tkinter import StringVar
 from urllib.parse import urlparse, parse_qs
 
 
