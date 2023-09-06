@@ -1,6 +1,7 @@
 import cv2
 import sys
 import json
+import time
 import serial
 import tkinter as tk
 from os.path import exists
@@ -9,8 +10,18 @@ from tkinter import StringVar
 from urllib.parse import urlparse, parse_qs
 
 
+global serial_available
+
 # ! change the serial port number based on what you see
-# ser = serial.Serial('/dev/tty.usbmodem323103')  # open serial port
+try:
+    # ser = serial.Serial('/dev/tty.usbmodem323103')  # open serial port
+    ser = serial.Serial('COM4')
+    serial_available = True
+except:
+    print("no serial device.. running in non-serial mode")
+    serial_available = False
+
+print(serial_available)
 
 
 class Robot:
@@ -36,11 +47,15 @@ class QRCodeScannerApp:
         self.filename = filename
         self.robot = robot
 
+        self.current_time = 0
+        self.timeout_timer = 0
+        self.timeout_value = 5
+
         self.root.title("QR Code Scanner")
 
         # logos
         self.ei = ImageTk.PhotoImage(Image.open(
-            'ei.png').resize((350, 256)))
+            'ei.png').resize((400, 200)))
 
         self.reedi = ImageTk.PhotoImage(Image.open(
             'reedi.png').resize((300, 256)))
@@ -98,20 +113,23 @@ class QRCodeScannerApp:
     def process_frame(self):
         _, frame = self.cap.read()
 
-        # ! uncomment below in production
-        # if(ser.inWaiting()):
-        #     inp_char = ser.read()
+        timeout_activated = False
+        self.current_time = time.time()
 
-        #     if inp_char == b'H':
-        #         print("inp_char", inp_char)
-        #         robot.set_ready()
-        #         self.update_status_label("Ready for QR code scanning...")
-        #         # call process_frame again to continue scanning
-        #         self.root.after(10, self.process_frame)  # Add this line
+        if (serial_available):
+            if (ser.inWaiting()):
+                inp_char = ser.read()
 
-        #     if inp_char == b'L':
-        #         print("inp_char", inp_char)
-        #         robot.set_busy()
+                if inp_char == b'H':
+                    print("inp_char", inp_char)
+                    robot.set_ready()
+                    # self.update_status_label("Ready for QR code scanning...")
+                    # call process_frame again to continue scanning
+                    self.root.after(10, self.process_frame)  # Add this line
+
+                if inp_char == b'L':
+                    print("inp_char", inp_char)
+                    robot.set_busy()
 
         if not self.robot.is_ready():
             self.display_busy_screen()
@@ -121,52 +139,79 @@ class QRCodeScannerApp:
             except cv2.error:
                 decode, bbox = None, None
 
+            self.current_time = time.time()
+
             if decode:
                 params = parse_qs(urlparse(decode).query)
                 coupon = params.get('coupon', [None])[0]
 
+                # check if coupon is empty from the qr code
                 if coupon is not None and coupon != '':
+                    print('current_time', self.current_time)
+
+                    if (timeout_activated == False):
+                        self.timeout_timer = self.current_time + self.timeout_value
+                        timeout_activated = True
+                        print('timeout_activated', self.timeout_timer)
+
+                    # check if coupon is present in the dictionary json file
                     if coupon in self.qr_codes:
+                        # check the scanned_codes set, if coupon not found in the set
                         if coupon not in self.scanned_codes:
+                            # handle the case where coupon not in the set but is already in the json dict
+                            # and we check if the coupon has been used or not
                             if self.qr_codes[coupon]:
-                                self.update_status_label(
-                                    "Coupon code expired!!")
+                                if self.current_time < self.timeout_timer and timeout_activated:
+                                    self.update_status_label(
+                                        "Coupon code expired!!")
                             else:
+                                # coupon is in the json dict but is not used, update dict
                                 self.qr_codes[coupon] = True
                                 self.scanned_codes.add(coupon)
                                 with open(self.filename, "w") as file:
                                     json.dump(self.qr_codes, file)
 
+                                if self.current_time < self.timeout_timer and timeout_activated:
+                                    self.update_status_label(
+                                        "Coupon accepted, preparing your ice cream...")
+
                                 self.send_to_robot()
-                                self.update_status_label(
-                                    "Coupon accepted, preparing your ice cream...")
                         else:
-                            self.update_status_label("Coupon code expired!!")
+                            if self.current_time < self.timeout_timer and timeout_activated:
+                                self.update_status_label(
+                                    "Coupon code expired!!")
                     else:
+                        # coupon is new, not stored previously in set or json dict
                         self.qr_codes[coupon] = True
                         self.scanned_codes.add(coupon)
                         with open(self.filename, "w") as file:
                             json.dump(self.qr_codes, file)
 
+                        if self.current_time < self.timeout_timer and timeout_activated:
+                            self.update_status_label(
+                                "Coupon accepted, preparing your ice cream...")
+
                         self.send_to_robot()
-                        self.update_status_label(
-                            "Coupon accepted, preparing your ice cream...")
+
                 else:
-                    self.update_status_label(
-                        "Unable to extract coupon code from QR code..")
+                    if self.current_time < self.timeout_timer and timeout_activated:
+                        self.update_status_label(
+                            "Unable to extract coupon code from QR code..")
 
                 if bbox is not None and len(bbox) > 0:
                     bbox = bbox[0].astype(int)
                     cv2.polylines(frame, [bbox], True, (0, 0, 255), 2)
 
-            self.display_waiting_screen()
+            if self.timeout_timer < self.current_time and not timeout_activated:
+                timeout_activated = False
+                self.display_waiting_screen()
 
         # display robot status on frame
         self.display_frame(frame)
 
-        # ! have to test this
+        # ! might need to further check this
         # call process_frame again after a delay
-        self.root.after(10, self.process_frame)
+        self.root.after(1, self.process_frame)
 
     def display_frame(self, frame):
         if not self.robot.is_ready():
@@ -201,14 +246,16 @@ class QRCodeScannerApp:
 
     def send_to_robot(self):
         print('signal sent to robot')
-        # ! uncomment below for production
-        # ser.write(b'K')     # write a string
+        if (serial_available):
+            ser.write(b'K')     # write a string - green light
 
     def close(self):
         self.cap.release()
         cv2.destroyAllWindows()
-        # ! uncomment below for production
-        # ser.close()
+
+        if (serial_available):
+            ser.close()
+
         self.root.destroy()
 
 
