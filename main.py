@@ -156,6 +156,7 @@ class QRCodeScannerApp:
 
                     # ! for testing used, we can remove the if statement for production?
                     # https://plough-ei.vercel.app/?coupon=49515f43-c28b-45a7-8edc-086340ff837b
+                    # uuid is randomly generated, chances of repeated uuid is near 0 - negligible.
                     if coupon == '49515f43-c28b-45a7-8edc-086340ff837b':
                         if self.current_time < self.timeout_timer and timeout_activated:
                             self.update_status_label(
