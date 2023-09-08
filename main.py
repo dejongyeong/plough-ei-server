@@ -154,44 +154,56 @@ class QRCodeScannerApp:
                         timeout_activated = True
                         print('timeout_activated', self.timeout_timer)
 
-                    # check if coupon is present in the dictionary json file
-                    if coupon in self.qr_codes:
-                        # check the scanned_codes set, if coupon not found in the set
-                        if coupon not in self.scanned_codes:
-                            # handle the case where coupon not in the set but is already in the json dict
-                            # and we check if the coupon has been used or not
-                            if self.qr_codes[coupon]:
-                                if self.current_time < self.timeout_timer and timeout_activated:
-                                    self.update_status_label(
-                                        "Coupon code expired!!")
-                            else:
-                                # coupon is in the json dict but is not used, update dict
-                                self.qr_codes[coupon] = True
-                                self.scanned_codes.add(coupon)
-                                with open(self.filename, "w") as file:
-                                    json.dump(self.qr_codes, file)
-
-                                if self.current_time < self.timeout_timer and timeout_activated:
-                                    self.update_status_label(
-                                        "Coupon accepted, preparing your ice cream...")
-
-                                self.send_to_robot()
-                        else:
-                            if self.current_time < self.timeout_timer and timeout_activated:
-                                self.update_status_label(
-                                    "Coupon code expired!!")
-                    else:
-                        # coupon is new, not stored previously in set or json dict
-                        self.qr_codes[coupon] = True
-                        self.scanned_codes.add(coupon)
-                        with open(self.filename, "w") as file:
-                            json.dump(self.qr_codes, file)
-
+                    # ! for testing used, we can remove the if statement for production?
+                    # https://plough-ei.vercel.app/?coupon=49515f43-c28b-45a7-8edc-086340ff837b
+                    if coupon == '49515f43-c28b-45a7-8edc-086340ff837b':
                         if self.current_time < self.timeout_timer and timeout_activated:
                             self.update_status_label(
                                 "Coupon accepted, preparing your ice cream...")
 
+                        print('testing')
+
                         self.send_to_robot()
+                    else:
+                        # main if-statement for production
+                        # check if coupon is present in the dictionary json file
+                        if coupon in self.qr_codes:
+                            # check the scanned_codes set, if coupon not found in the set
+                            if coupon not in self.scanned_codes:
+                                # handle the case where coupon not in the set but is already in the json dict
+                                # and we check if the coupon has been used or not
+                                if self.qr_codes[coupon]:
+                                    if self.current_time < self.timeout_timer and timeout_activated:
+                                        self.update_status_label(
+                                            "Coupon code expired!!")
+                                else:
+                                    # coupon is in the json dict but is not used, update dict
+                                    self.qr_codes[coupon] = True
+                                    self.scanned_codes.add(coupon)
+                                    with open(self.filename, "w") as file:
+                                        json.dump(self.qr_codes, file)
+
+                                    if self.current_time < self.timeout_timer and timeout_activated:
+                                        self.update_status_label(
+                                            "Coupon accepted, preparing your ice cream...")
+
+                                    self.send_to_robot()
+                            else:
+                                if self.current_time < self.timeout_timer and timeout_activated:
+                                    self.update_status_label(
+                                        "Coupon code expired!!")
+                        else:
+                            # coupon is new, not stored previously in set or json dict
+                            self.qr_codes[coupon] = True
+                            self.scanned_codes.add(coupon)
+                            with open(self.filename, "w") as file:
+                                json.dump(self.qr_codes, file)
+
+                            if self.current_time < self.timeout_timer and timeout_activated:
+                                self.update_status_label(
+                                    "Coupon accepted, preparing your ice cream...")
+
+                            self.send_to_robot()
 
                 else:
                     if self.current_time < self.timeout_timer and timeout_activated:
