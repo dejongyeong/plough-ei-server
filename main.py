@@ -10,12 +10,20 @@ from tkinter import StringVar
 from urllib.parse import urlparse, parse_qs
 
 
+SERIAL_PORT = 'COM3'    # change com port based on what you see on device manager
+VIDEO_CAPTURE = 1       # 1 = external webcam (default), 0 = built-in webcam
+
+
+###
+# Code starts below
+###
+
 global serial_available
 
-# ! change the serial port number based on what you see
+
 try:
     # ser = serial.Serial('/dev/tty.usbmodem323103')  # open serial port
-    ser = serial.Serial('COM4')
+    ser = serial.Serial(SERIAL_PORT)
     serial_available = True
 except:
     print("no serial device.. running in non-serial mode")
@@ -51,47 +59,68 @@ class QRCodeScannerApp:
         self.timeout_timer = 0
         self.timeout_value = 5
 
-        self.root.title("QR Code Scanner")
+        self.root.title("National Ploughing Championship 2023")
 
-        # logos
-        self.ei = ImageTk.PhotoImage(Image.open(
-            'ei.png').resize((400, 200)))
+        # read image
+        self.busy_image = ImageTk.PhotoImage(
+            Image.open('busy.jpg').resize((600, 500)))
+        self.ei = ImageTk.PhotoImage(Image.open('ei.png').resize((450, 200)))
+        self.reedi = ImageTk.PhotoImage(
+            Image.open('reedi.png').resize((300, 256)))
 
-        self.reedi = ImageTk.PhotoImage(Image.open(
-            'reedi.png').resize((300, 256)))
-
-        self.image_frame = tk.Frame(root)
-        self.image_frame.pack()
-
-        self.ei_label = tk.Label(self.image_frame, image=self.ei)
-        self.ei_label.pack(side=tk.LEFT)
-
-        self.reedi_label = tk.Label(self.image_frame, image=self.reedi)
-        self.reedi_label.pack(side=tk.LEFT)
-
+        # ei logos
         ###
-        ###
+        self.ei_frame = tk.Frame(root)
+        self.ei_frame.pack()
 
-        # create a string variable to dynamically update label text
+        self.ei_label = tk.Label(self.ei_frame, image=self.ei)
+        self.ei_label.pack(side=tk.LEFT, pady=10)
+
+        # Message
+        ###
+        self.welcome_label = tk.Label(
+            root, text='Welcome to National Ploughing Championship 2023', font=("Helvetica", 16), fg="#023662")
+        self.welcome_label.pack()
+
+        self.subtitle_label = tk.Label(
+            root, text='Scan QR code to retrieve your ice cream', font=("Helvetica", 12), fg="#023662")
+        self.subtitle_label.pack(pady=10)
+
+        # create a canvas for displaying images
+        ###
+        self.canvas_frame = tk.Frame(root)
+        self.canvas_frame.pack(pady=10)
+
+        self.canvas = tk.Canvas(self.canvas_frame, width=1080, height=550)
+        self.canvas.pack()
+
+        # string variable
+        ###
+        self.status_frame = tk.Frame(root)
+        self.status_frame.pack(pady=25)
+
         self.status_var = StringVar()
         self.status_var.set('Ready for QR code scanning...')
 
         # create labels for displaying messages
         self.status_label = tk.Label(
-            root, textvariable=self.status_var, font=("Helvetica", 16))
-        self.status_label.pack(pady=10)
+            self.status_frame, textvariable=self.status_var, font=("Helvetica", 32))
+        self.status_label.pack()
 
-        # create images for waiting and busy screens
-        # self.waiting_image = PhotoImage(file="waiting.png")
-        self.busy_image = ImageTk.PhotoImage(
-            Image.open('busy.jpg').resize((500, 400)))
+        # reedi label and created by
+        ###
+        self.reedi_frame = tk.Frame(root)
+        self.reedi_frame.pack(pady=250)
 
-        # create a canvas for displaying images
-        self.canvas = tk.Canvas(root, width=1920, height=1080)
-        self.canvas.pack()
+        self.reedi_label = tk.Label(self.reedi_frame, image=self.reedi)
+        self.reedi_label.pack(side=tk.TOP)
+
+        self.created_label = tk.Label(
+            self.reedi_frame, text='Developed by: De Jong Yeong, Anshul Awasthi, Krishna Panduru', font=("Helvetica", 12), fg="#023662")
+        self.created_label.pack(side=tk.BOTTOM)
 
         # start the video capture
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(VIDEO_CAPTURE)
         self.detector = cv2.QRCodeDetector()
 
         self.scanned_codes = set()
@@ -161,8 +190,6 @@ class QRCodeScannerApp:
                         if self.current_time < self.timeout_timer and timeout_activated:
                             self.update_status_label(
                                 "Coupon accepted, preparing your ice cream...")
-
-                        print('testing')
 
                         self.send_to_robot()
                     else:
@@ -291,6 +318,3 @@ if __name__ == "__main__":
     root.mainloop()
 
     sys.exit()
-
-
-# image source: https://www.freepik.com/free-vector/loading-concept-illustration_7069619.htm#query=loading&position=44&from_view=search&track=sph
