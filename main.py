@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import serial
+import argparse
 import tkinter as tk
 from os.path import exists
 from PIL import ImageTk, Image
@@ -10,8 +11,17 @@ from tkinter import StringVar
 from urllib.parse import urlparse, parse_qs
 
 
-SERIAL_PORT = 'COM3'    # change com port based on what you see on device manager
-VIDEO_CAPTURE = 1       # 1 = external webcam (default), 0 = built-in webcam
+parser = argparse.ArgumentParser(
+    description="QR Code Scanner for Ploughing EI")
+parser.add_argument('--serial-port', type=str, default='COM3',
+                    help='Serial port for robot communication (e.g., COM3)')
+parser.add_argument('--video-capture', type=int, default=1, choices=[
+                    0, 1], help="Video capture source (0 for built-in webcam, 1 for external webcam)")
+args = parser.parse_args()
+
+
+SERIAL_PORT = args.serial_port
+VIDEO_CAPTURE = args.video_capture
 
 
 ###
